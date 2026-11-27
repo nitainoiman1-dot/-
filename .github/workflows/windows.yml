@@ -1,0 +1,36 @@
+name: Build Windows
+on:
+  push:
+    paths:
+      - 'windows/**'
+      - '.github/workflows/windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: התקנת החבילות
+        working-directory: windows
+        run: npm install
+      - name: בניית קובץ ה-exe
+        working-directory: windows
+        run: npx electron-builder --win portable --publish never
+      - name: אריזה ל-zip (לשליחה בוואטסאפ)
+        working-directory: windows/dist
+        run: Compress-Archive -Path Maslul.exe -DestinationPath Maslul-Windows.zip
+      - name: פרסום קישור הורדה
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: win-${{ github.run_number }}
+          name: מסלול למחשב (גרסה ${{ github.run_number }})
+          files: |
+            windows/dist/Maslul.exe
+            windows/dist/Maslul-Windows.zip
